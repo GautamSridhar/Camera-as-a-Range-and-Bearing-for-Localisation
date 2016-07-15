@@ -101,6 +101,46 @@ def find_marker_contour_method(marker_list, marker_names, camera_img):
 			return 0,0,0
 	else:
 		return 0,0,0
+def PcTem(T,I):
+	w1,h1 = T.shape
+	w2,h2 = I.shape
+	w3 = w1+w2-1
+	h3 = h1+h2-1
+	Tn = np.zeros((w3,h3))
+	In = np.zeros((w3,h3))
+	R = np.zeros((w3,h3))
+	Tn[:w1,:h1] = T
+	In[:w2,:h2] = I
+	dft_Tn = np.fft.fft2(Tn)
+	dft_Tn = np.fft.fftshift(dft_Tn)
+	dft_In = np.fft.fft2(In)
+	dft_In = np.fft.fftshift(dft_In)
+	Tnconj = np.conjugate(dft_Tn)
+	numer = np.multiply(dft_In,Tnconj)
+	denom = np.absolute(numer)
+	R = np.divide(numer,denom)
+	R = np.fft.ifftshift(R)
+	r = np.fft.ifft2(R)
+	r = np.absolute(r)
+	q = r.max()
+	maxloc = np.where(r == r.max())
+	position = [int(maxloc[1]+(h1/2.0)) , int(maxloc[0]+(w1/2.0))]
+	return maxloc, q
 
+def find_marker_phase_method(marker_list, marker_names, camera_img):
+	outputs = []
+	for i,marker in enumerate(marker_list):
+		position, max_val = temp_match(marker, camera_img)
+		outputs.append([position, max_val, marker_names[i]])
+
+	outputs.sort(key=lambda thing: thing[1])
+	outputs.reverse()
+	best_match = outputs[0]
+	found = 0
+	if best_match[1]>0.960:
+		
+		found = 1 
+
+	return found, best_match[0], best_match[2]
 
 
